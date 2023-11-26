@@ -1,5 +1,5 @@
 // App.js
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getImages } from '../service/api';
@@ -10,88 +10,77 @@ import Modal from '../components/Modal/Modal';
 import Button from './Button/Button';
 import { Loader } from './Loader/Loader';
 
-export class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    images: [],
-    loading: false,
-    largeImageURL: null,
-    showModal: false,
-    disabledBtn: false,
-  };
+export function App() {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [disabledBtn, setDisabledBtn] = useState(false);
 
-  getDataImages = async () => {
-    const { query, page } = this.state;
-    this.setState({ loading: true });
-
-    try {
-      const dataImg = await getImages(query, page);
-      this.setState(prevState => ({
-        images: [...prevState.images, ...dataImg.hits],
-        disabledBtn: page < Math.ceil(dataImg.totalHits / 12),
-      }));
-    } catch (error) {
-      this.setState({ images: [] });
-      toast.error('Check valid searching');
-    } finally {
-      this.setState({ loading: false });
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-  };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      this.state.page !== prevState.page ||
-      this.state.query !== prevState.query
-    ) {
-      this.getDataImages();
-    }
-  }
+    const getDataImages = async () => {
+      setLoading(true);
+      try {
+        const dataImg = await getImages(query, page);
+        const { hits, totalHits } = dataImg;
+        setImages(prevState => (prevState ? [...prevState, ...hits] : hits));
+        setDisabledBtn(page < Math.ceil(totalHits / 12) ? true : false);
+      } catch (error) {
+        setImages(null);
+        toast.error('Check valid searching');
+      } finally {
+        setLoading(false);
+      }
+    };
+    getDataImages();
+  }, [query, page]);
 
-  handleFormSubmit = query => {
+  const handleFormSubmit = query => {
     if (!query) {
       toast.error('Enter correct name for search!');
       return;
     }
-    this.setState({ query, page: 1, images: [], loadMore: false });
+    setQuery(query);
+    setPage(1);
+    setImages(null);
+    setDisabledBtn(false);
+    setShowModal(false);
   };
 
-  toggleModal = largeImageURL => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-      largeImageURL,
-    }));
+  const toggleModal = largeImageURL => {
+    setShowModal(state => !state);
+    setLargeImageURL(largeImageURL);
   };
 
-  loadMoreBtn = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const loadMoreBtn = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    const { images, largeImageURL, showModal, disabledBtn, loading } =
-      this.state;
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gridGap: '16px',
-          paddingBottom: '24px',
-        }}
-      >
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {images && (
-          <ImageGallery>
-            <ImageGalleryItem images={images} onClick={this.toggleModal} />
-          </ImageGallery>
-        )}
-        {loading && <Loader />}
-        {disabledBtn && <Button onClick={this.loadMoreBtn} />}
-        {showModal && (
-          <Modal onClose={this.toggleModal} ImageUrl={largeImageURL} />
-        )}
-        <ToastContainer autoClose={3000} />
-      </div>
-    );
-  }
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gridGap: '16px',
+        paddingBottom: '24px',
+      }}
+    >
+      <Searchbar onSubmit={handleFormSubmit} />
+      {images && (
+        <ImageGallery>
+          <ImageGalleryItem images={images} onClick={toggleModal} />
+        </ImageGallery>
+      )}
+      {loading && <Loader />}
+      {disabledBtn && <Button onClick={loadMoreBtn} />}
+      {showModal && <Modal onClose={toggleModal} ImageUrl={largeImageURL} />}
+      <ToastContainer autoClose={3000} />
+    </div>
+  );
 }

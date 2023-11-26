@@ -1,48 +1,44 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import css from './Searchbar.module.css';
 import { TbCameraSearch } from 'react-icons/tb';
 
-class Searchbar extends Component {
-  state = {
-    search: '',
+function Searchbar({ onSubmit }) {
+  const [search, setSearch] = useState('');
+
+  const handleChange = e => {
+    setSearch(e.currentTarget.value.toLowerCase());
   };
 
-  handleChange = e => {
-    this.setState({ search: e.currentTarget.value.toLowerCase() });
-  };
-
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
-    if (this.state.search.trim() === '') {
+    if (search.trim() === '') {
       return toast.error('Enter search name');
     }
-    this.props.onSubmit(this.state.search);
-    this.setState({ search: '' });
+    onSubmit(search);
+    setSearch('');
   };
 
-  render() {
-    return (
-      <header className={css.Searchbar}>
-        <form className={css.SearchForm} onSubmit={this.handleSubmit}>
-          <button type="submit" className={css.SearchFormButton}>
-            <span className={css.SearchFormButtonLabel}>
-              <TbCameraSearch />
-            </span>
-          </button>
+  return (
+    <header className={css.Searchbar}>
+      <form className={css.SearchForm} onSubmit={handleSubmit}>
+        <button type="submit" className={css.SearchFormButton}>
+          <span className={css.SearchFormButtonLabel}>
+            <TbCameraSearch />
+          </span>
+        </button>
 
-          <input
-            className={css.SearchFormInput}
-            type="text"
-            placeholder="Search images and photos"
-            value={this.state.search}
-            onChange={this.handleChange}
-          />
-        </form>
-      </header>
-    );
-  }
+        <input
+          className={css.SearchFormInput}
+          type="text"
+          placeholder="Search images and photos"
+          value={search}
+          onChange={handleChange}
+        />
+      </form>
+    </header>
+  );
 }
 
 export default Searchbar;
