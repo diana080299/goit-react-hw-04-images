@@ -12,13 +12,14 @@ export default function Modal({ onClose, ImageUrl, tags }) {
   };
 
   useEffect(() => {
-    const handleKeyDown = event => {
-      if (event.code === 'Escape') {
+    const handleKeyDown = e => {
+      if (e.code === 'Escape') {
         onClose();
       }
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
     };
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
   return createPortal(
